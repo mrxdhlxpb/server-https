@@ -1,0 +1,372 @@
+/*
+ *  Copyright (C) 2024 mrxdhlxpb
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package personal.mrxdhlxpb.server.https.test;
+
+import personal.mrxdhlxpb.server.https.Fields;
+
+import java.io.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
+/**
+ * Provides some constants whose values are authentic and accurate, and are considered authoritative
+ * by codes that refer to these values.
+ * <p> Generally, to test a piece of code, we might obtain a value from the execution of the piece
+ * of code we are testing, whose correctness reflects the correctness of the code, and see whether
+ * the value equals to the corresponding constant defined in this class.
+ * <p> Therefore, the accuracy of all of these constants has a direct impact on the accuracy of the
+ * test results. Here's how we ensure the accuracy of the constants. Constants which need to be
+ * initialized manually, such as a test file, or something requiring too much extra effort to
+ * implement an automatic calculation function, should be collected and reported to the test
+ * executor, who will be asked to examine the correctness of the value of the constants. Some
+ * constants are calculated automatically, possibly based on some other constants. The rest of the
+ * constants are <em>self-tested</em> constants, which require manual initialization, but have the
+ * capability to examine the correctness of themselves. A runtime exception will be thrown if a
+ * self-tested constant is found to be wrong.
+ *
+ * @author mrxdhlxpb
+ */
+public final class TestConstants {
+    /**
+     * Marked on <em>manually initialized</em> constants.
+     * <p> Each field marked by this annotation will be reported to the test executor.
+     * <p> <strong>All {@code public} fields declared in this class must be {@code static} and
+     * {@code final}. Each public field must be annotated with one of the three annotations:
+     * {@code @ManuallyInitializedConstants}, {@code @AutomaticallyCalculatedConstants} or
+     * {@code @SelfTestedConstants}. Each public field can be annotated with only one annotation.
+     * </strong> If these requirements are not met, a runtime exception will be thrown.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    private @interface ManuallyInitializedConstant {
+        /**
+         *
+         * @return the comment for the current constant, which will be shown to the test executor
+         */
+        String value();
+    }
+
+    /**
+     * Marked on <em>automatically calculated</em> constants.
+     * <p> Automatically calculated constants should be initialized after the initialization of all
+     * manually initialized constants and the invocation of all self-test methods.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    private @interface AutomaticallyCalculatedConstant {}
+
+    /**
+     * Marked on <em>self-tested</em> constants.
+     * <p> For each self-tested constant, we execute its <em>self-test method</em>. A self-test
+     * method must be both {@code private} and {@code static}, and must not have any return value or
+     * exception declared to be thrown. It must have only one parameter, and the type of the
+     * parameter must be {@link Field}. In a self-test method you may examine the correctness of the
+     * constant and throw a runtime exception if the constant is incorrect.
+     * <p> Self-test methods should be invoked after the initialization of all manually initialized
+     * constants.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    private @interface SelfTestedConstant {
+        /**
+         *
+         * @return the self-test method name
+         */
+        String value();
+    }
+
+    @ManuallyInitializedConstant("Make sure this file contains no less than 100 bytes.")
+    public static final File TEST_FILE_1 = new File("src/test/resources/test_file_1");
+
+    /**
+     * all bytes in TEST_FILE_1
+     */
+    @AutomaticallyCalculatedConstant
+    public static final byte[] TEST_FILE_1_BYTES;
+
+    /**
+     * number of bytes in TEST_FILE_1
+     */
+    @SelfTestedConstant("selfTestMethod1")
+    public static final int TEST_FILE_1_BYTES_LENGTH = 16877;
+
+    private static void selfTestMethod1(Field field) {
+        if (TEST_FILE_1_BYTES_LENGTH < 100)
+            throw new RuntimeException("TEST_FILE_1_BYTES_LENGTH < 100");
+        try (var in = new FileInputStream(TEST_FILE_1)) {
+            if (TEST_FILE_1_BYTES_LENGTH != in.readAllBytes().length)
+                throw new RuntimeException(String.format("""
+                                
+                                You've set an incorrect value for %s.%s:
+                                
+                                \t%s = %d;
+                                \t%s   %s
+                                The value should be %d.
+                                """,
+                        TestConstants.class.getCanonicalName(),
+                        field.getName(),
+                        field,
+                        TEST_FILE_1_BYTES_LENGTH,
+                        " ".repeat(field.toString().length()),
+                        "^".repeat(Integer.toString(TEST_FILE_1_BYTES_LENGTH).length()),
+                        TEST_FILE_1_BYTES.length)); //TODO
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @AutomaticallyCalculatedConstant
+    public static final String TEST_FILE_1_STRING_US_ASCII;
+
+    @AutomaticallyCalculatedConstant
+    public static final byte TEST_FILE_1_BYTES_FIRST_ELEMENT;
+
+    @AutomaticallyCalculatedConstant
+    public static final byte[] TEST_FILE_1_BYTES_FIRST_TEN_ELEMENTS;
+
+    @ManuallyInitializedConstant("Make sure the content of this file is *( field-line CRLF ) CRLF")
+    public static final File TEST_FILE_2 = new File("src/test/resources/test_file_2");
+
+    @ManuallyInitializedConstant("The Fields object that represents the content of TEST_FILE_2")
+    public static final Fields TEST_FILE_2_FIELDS;
+
+    // initialize TEST_FILE_2_FIELDS
+    static {
+        TEST_FILE_2_FIELDS = new Fields();
+        TEST_FILE_2_FIELDS.set("test-field-name1", "test-field-value1");
+        TEST_FILE_2_FIELDS.set("test-field-name2", "test-field-value2");
+        TEST_FILE_2_FIELDS.set("test-field-name3", "test-field-value3");
+        TEST_FILE_2_FIELDS.set("test-field-name4", "test-field-value4");
+        TEST_FILE_2_FIELDS.set("test-field-name5", "test-field-value5");
+        TEST_FILE_2_FIELDS.set("test-field-name6", "test-field-value6");
+    }
+
+    @AutomaticallyCalculatedConstant
+    public static final int TEST_FILE_2_LONGEST_FILED_LINE_LENGTH;
+
+    @AutomaticallyCalculatedConstant
+    public static final int TEST_FILE_2_SECTION_SIZE;
+
+    @ManuallyInitializedConstant("chunked TEST_FILE_1")
+    public static final File CHUNKED_TEST_FILE_1 =
+            new File("src/test/resources/chunked_test_file_1");
+
+    static {
+        // if CHUNKED_TEST_FILE_1 does not exist,
+        // generate CHUNKED_TEST_FILE_1 automatically.
+
+        if (!CHUNKED_TEST_FILE_1.exists())
+            try (var printStream = new PrintStream(new BufferedOutputStream(new FileOutputStream(
+                    CHUNKED_TEST_FILE_1)));
+                 var inputStream = new BufferedInputStream(new FileInputStream(TEST_FILE_1))) {
+
+                final byte[] b = new byte[50];
+                int read;
+                while ((read = inputStream.read(b)) > 0) {
+                    printStream.print(Integer.toString(read, 16));
+                    printStream.write(0XD);
+                    printStream.write(0XA);
+                    printStream.write(b, 0, read);
+                    printStream.write(0XD);
+                    printStream.write(0XA);
+                }
+                printStream.print(0);
+                printStream.write(0XD);
+                printStream.write(0XA);
+
+                final Fields generatedTrailerFields = new Fields();
+                generatedTrailerFields.set(
+                        "generated-trailer-field-name1",
+                        "generated-trailer-field-value1"
+                );
+                generatedTrailerFields.set(
+                        "generated-trailer-field-name2",
+                        "generated-trailer-field-value2"
+                );
+                generatedTrailerFields.set(
+                        "generated-trailer-field-name3",
+                        "generated-trailer-field-value3"
+                );
+
+                generatedTrailerFields.print(printStream);
+
+                printStream.write(0XD);
+                printStream.write(0XA);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+    }
+
+    @ManuallyInitializedConstant("trailer fields of CHUNKED_TEST_FILE_1")
+    public static final Fields CHUNKED_TEST_FILE_1_TRAILER_FIELDS;
+
+    static {
+        CHUNKED_TEST_FILE_1_TRAILER_FIELDS = new Fields();
+        CHUNKED_TEST_FILE_1_TRAILER_FIELDS.set(
+                "generated-trailer-field-name1",
+                "generated-trailer-field-value1"
+        );
+        CHUNKED_TEST_FILE_1_TRAILER_FIELDS.set(
+                "generated-trailer-field-name2",
+                "generated-trailer-field-value2"
+        );
+        CHUNKED_TEST_FILE_1_TRAILER_FIELDS.set(
+                "generated-trailer-field-name3",
+                "generated-trailer-field-value3"
+        );
+    }
+
+    @AutomaticallyCalculatedConstant
+    public static final byte[] CHUNKED_TEST_FILE_1_BYTES;
+
+    @AutomaticallyCalculatedConstant
+    public static final int CHUNKED_TEST_FILE_1_BYTES_LENGTH;
+
+    // Requirements
+    static {
+        try {
+            for (Field field : TestConstants.class.getFields()) {
+                int mod = field.getModifiers();
+                if (!Modifier.isStatic(mod) || !Modifier.isFinal(mod))
+                    throw new RuntimeException("All public fields declared in this class" +
+                            " must be static and final.");
+                if (field.getAnnotations().length != 1)
+                    throw new RuntimeException("Each public field can be annotated with " +
+                            "only one annotation.");
+                if (!field.isAnnotationPresent(ManuallyInitializedConstant.class)
+                        && !field.isAnnotationPresent(AutomaticallyCalculatedConstant.class)
+                        && !field.isAnnotationPresent(SelfTestedConstant.class))
+                    throw new RuntimeException("Each public field must be annotated with " +
+                            "one of the three annotations: @ManuallyInitializedConstants, " +
+                            "@AutomaticallyCalculatedConstants or @SelfTestedConstants.");
+
+                if (field.isAnnotationPresent(SelfTestedConstant.class)) {
+                    String selfTestMethodName = field.getAnnotation(SelfTestedConstant.class)
+                            .value();
+                    Method selfTestMethod = TestConstants.class.getDeclaredMethod(
+                            selfTestMethodName, Field.class);
+
+                    int modifiers = selfTestMethod.getModifiers();
+                    if (!Modifier.isPrivate(modifiers) || !Modifier.isStatic(modifiers))
+                        throw new RuntimeException
+                                ("A self-test method must be both private and static.");
+                    if (selfTestMethod.getReturnType() != Void.TYPE)
+                        throw new RuntimeException
+                                ("A self-test method must not have any return value");
+                    if (selfTestMethod.getParameterCount() != 1
+                            || selfTestMethod.getParameterTypes()[0] != Field.class)
+                        throw new RuntimeException("A self-test method must have only one " +
+                                "parameter, and the type of the parameter must be: " +
+                                Field.class.getCanonicalName());
+                    if (selfTestMethod.getExceptionTypes().length != 0)
+                        throw new RuntimeException("A self-test method must not have any" +
+                                " exception declared to be thrown");
+                }
+            }
+        } catch (Exception e) {throw new RuntimeException(e);}
+    }
+
+    // Manually Initialized Constants Report
+    static {
+
+        try {
+            StringBuilder message = new StringBuilder("""
+                    Make sure the following values are correct:
+                                        
+                    """);
+
+            for (Field field : TestConstants.class.getFields()) {
+                if (!field.isAnnotationPresent(ManuallyInitializedConstant.class)) continue;
+
+                message.append("\t// ")
+                        .append(field.getAnnotation(ManuallyInitializedConstant.class).value())
+                        .append(System.lineSeparator())
+                        .append("\t")
+                        .append(field.getName())
+                        .append(" = ")
+                        .append(field.get(null))
+                        .append(";")
+                        .append(System.lineSeparator())
+                        .append(System.lineSeparator());
+            }
+            System.out.println(message);
+        } catch (Exception e) {throw new RuntimeException(e);}
+    }
+
+    // Self-Test Methods Invocation
+    static {
+        try {
+            for (Field field : Arrays
+                    .stream(TestConstants.class.getFields())
+                    .filter((field) -> field.isAnnotationPresent(SelfTestedConstant.class))
+                    .toList()) {
+
+                String selfTestMethodName = field.getAnnotation(SelfTestedConstant.class).value();
+                Method selfTestMethod = TestConstants.class.getDeclaredMethod(selfTestMethodName,
+                        Field.class);
+                selfTestMethod.invoke(null, field);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // Automatically Calculated Constants Initialization
+    static {
+
+        // If any automatically calculated constant is not initialized,
+        // you will have a compiler error.
+
+        try (var in = new FileInputStream(TEST_FILE_1)) {
+            TEST_FILE_1_BYTES = in.readAllBytes();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        TEST_FILE_1_STRING_US_ASCII = new String(TEST_FILE_1_BYTES, StandardCharsets.US_ASCII);
+        TEST_FILE_1_BYTES_FIRST_ELEMENT = TEST_FILE_1_BYTES[0];
+        TEST_FILE_1_BYTES_FIRST_TEN_ELEMENTS = Arrays.copyOf(TEST_FILE_1_BYTES, 10);
+        TEST_FILE_2_LONGEST_FILED_LINE_LENGTH = TEST_FILE_2_FIELDS
+                .toList()
+                .stream()
+                .map((field) -> field.fieldName() + ": " + field.fieldValue())
+                .mapToInt(String::length)
+                .max()
+                .orElseThrow();
+        TEST_FILE_2_SECTION_SIZE = TEST_FILE_2_FIELDS
+                .toList()
+                .stream()
+                .map((field) -> field.fieldName() + ": " + field.fieldValue())
+                .mapToInt(String::length)
+                .map((i) -> i + 2)
+                .sum();
+        try (var in = new FileInputStream(CHUNKED_TEST_FILE_1)) {
+            CHUNKED_TEST_FILE_1_BYTES = in.readAllBytes();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        CHUNKED_TEST_FILE_1_BYTES_LENGTH = CHUNKED_TEST_FILE_1_BYTES.length;
+
+    }
+
+}

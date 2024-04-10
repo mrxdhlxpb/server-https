@@ -1,0 +1,1053 @@
+32
+/*
+ *  Copyright (C) 2024 mrxdhlxpb
+ *
+ *  This
+32
+ program is free software: you can redistribute it
+32
+ and/or modify
+ *  it under the terms of the GNU 
+32
+General Public License as published by
+ *  the Fr
+32
+ee Software Foundation, either version 3 of the Li
+32
+cense, or
+ *  (at your option) any later version.
+32
+
+ *
+ *  This program is distributed in the hope 
+32
+that it will be useful,
+ *  but WITHOUT ANY WARRA
+32
+NTY; without even the implied warranty of
+ *  MER
+32
+CHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+32
+ See the
+ *  GNU General Public License for more 
+32
+details.
+ *
+ *  You should have received a copy 
+32
+of the GNU General Public License
+ *  along with 
+32
+this program.  If not, see <https://www.gnu.org/li
+32
+censes/>.
+ */
+package personal.mrxdhlxpb.server.
+32
+https.test;
+
+import personal.mrxdhlxpb.server.ht
+32
+tps.Fields;
+
+import java.io.*;
+import java.lang
+32
+.annotation.ElementType;
+import java.lang.annotat
+32
+ion.Retention;
+import java.lang.annotation.Retent
+32
+ionPolicy;
+import java.lang.annotation.Target;
+i
+32
+mport java.lang.reflect.Field;
+import java.lang.r
+32
+eflect.Method;
+import java.lang.reflect.Modifier;
+32
+
+import java.nio.charset.StandardCharsets;
+impor
+32
+t java.util.Arrays;
+
+/**
+ * Provides some const
+32
+ants whose values are authentic and accurate, and 
+32
+are considered authoritative
+ * by codes that ref
+32
+er to these values.
+ * <p> Generally, to test a p
+32
+iece of code, we might obtain a value from the exe
+32
+cution of the piece
+ * of code we are testing, wh
+32
+ose correctness reflects the correctness of the co
+32
+de, and see whether
+ * the value equals to the co
+32
+rresponding constant defined in this class.
+ * <p
+32
+> Therefore, the accuracy of all of these constant
+32
+s has a direct impact on the accuracy of the
+ * t
+32
+est results. Here's how we ensure the accuracy of 
+32
+the constants. Constants which need to be
+ * init
+32
+ialized manually, such as a test file, or somethin
+32
+g requiring too much extra effort to
+ * implement
+32
+ an automatic calculation function, should be coll
+32
+ected and reported to the test
+ * executor, who w
+32
+ill be asked to examine the correctness of the val
+32
+ue of the constants. Some
+ * constants are calcul
+32
+ated automatically, possibly based on some other c
+32
+onstants. The rest of the
+ * constants are <em>se
+32
+lf-tested</em> constants, which require manual ini
+32
+tialization, but have the
+ * capability to examin
+32
+e the correctness of themselves. A runtime excepti
+32
+on will be thrown if a
+ * self-tested constant is
+32
+ found to be wrong.
+ *
+ * @author mrxdhlxpb
+ */
+32
+
+public final class TestConstants {
+    /**
+   
+32
+  * Marked on <em>manually initialized</em> consta
+32
+nts.
+     * <p> Each field marked by this annotat
+32
+ion will be reported to the test executor.
+     *
+32
+ <p> <strong>All {@code public} fields declared in
+32
+ this class must be {@code static} and
+     * {@c
+32
+ode final}. Each public field must be annotated wi
+32
+th one of the three annotations:
+     * {@code @M
+32
+anuallyInitializedConstants}, {@code @Automaticall
+32
+yCalculatedConstants} or
+     * {@code @SelfTeste
+32
+dConstants}. Each public field can be annotated wi
+32
+th only one annotation.
+     * </strong> If these
+32
+ requirements are not met, a runtime exception wil
+32
+l be thrown.
+     */
+    @Retention(RetentionPol
+32
+icy.RUNTIME)
+    @Target(ElementType.FIELD)
+    
+32
+private @interface ManuallyInitializedConstant {
+
+32
+        /**
+         *
+         * @return the co
+32
+mment for the current constant, which will be show
+32
+n to the test executor
+         */
+        Strin
+32
+g value();
+    }
+
+    /**
+     * Marked on <em
+32
+>automatically calculated</em> constants.
+     * 
+32
+<p> Automatically calculated constants should be i
+32
+nitialized after the initialization of all
+     *
+32
+ manually initialized constants and the invocation
+32
+ of all self-test methods.
+     */
+    @Retentio
+32
+n(RetentionPolicy.RUNTIME)
+    @Target(ElementTyp
+32
+e.FIELD)
+    private @interface AutomaticallyCalc
+32
+ulatedConstant {}
+
+    /**
+     * Marked on <em
+32
+>self-tested</em> constants.
+     * <p> For each 
+32
+self-tested constant, we execute its <em>self-test
+32
+ method</em>. A self-test
+     * method must be b
+32
+oth {@code private} and {@code static}, and must n
+32
+ot have any return value or
+     * exception decl
+32
+ared to be thrown. It must have only one parameter
+32
+, and the type of the
+     * parameter must be {@
+32
+link Field}. In a self-test method you may examine
+32
+ the correctness of the
+     * constant and throw
+32
+ a runtime exception if the constant is incorrect.
+32
+
+     * <p> Self-test methods should be invoked a
+32
+fter the initialization of all manually initialize
+32
+d
+     * constants.
+     */
+    @Retention(Rete
+32
+ntionPolicy.RUNTIME)
+    @Target(ElementType.FIEL
+32
+D)
+    private @interface SelfTestedConstant {
+ 
+32
+       /**
+         *
+         * @return the sel
+32
+f-test method name
+         */
+        String va
+32
+lue();
+    }
+
+    @ManuallyInitializedConstant(
+32
+"Make sure this file contains no less than 100 byt
+32
+es.")
+    public static final File TEST_FILE_1 = 
+32
+new File("src/test/resources/test_file_1");
+
+   
+32
+ /**
+     * all bytes in TEST_FILE_1
+     */
+  
+32
+  @AutomaticallyCalculatedConstant
+    public sta
+32
+tic final byte[] TEST_FILE_1_BYTES;
+
+    /**
+  
+32
+   * number of bytes in TEST_FILE_1
+     */
+    
+32
+@SelfTestedConstant("selfTestMethod1")
+    public
+32
+ static final int TEST_FILE_1_BYTES_LENGTH = 15985
+32
+;
+
+    private static void selfTestMethod1(Field
+32
+ field) {
+        if (TEST_FILE_1_BYTES_LENGTH < 
+32
+100)
+            throw new RuntimeException("TEST
+32
+_FILE_1_BYTES_LENGTH < 100");
+        try (var in
+32
+ = new FileInputStream(TEST_FILE_1)) {
+          
+32
+  if (TEST_FILE_1_BYTES_LENGTH != in.readAllBytes(
+32
+).length)
+                throw new RuntimeExcept
+32
+ion(String.format("""
+                           
+32
+                             
+                   
+32
+             You've set an incorrect value for %s.
+32
+%s:
+                                             
+32
+           
+                                \t\t%
+32
+s = %d;
+                                \t\t%s   
+32
+%s
+                                The value shou
+32
+ld be %d.
+                                """,
+ 
+32
+                       TestConstants.class.getCano
+32
+nicalName(),
+                        field.getNam
+32
+e(),
+                        field,
+            
+32
+            TEST_FILE_1_BYTES_LENGTH,
+           
+32
+             " ".repeat(field.toString().length())
+32
+,
+                        "^".repeat(Integer.toSt
+32
+ring(TEST_FILE_1_BYTES_LENGTH).length()),
+       
+32
+                 TEST_FILE_1_BYTES.length));
+    
+32
+    } catch (Exception e) {
+            throw new
+32
+ RuntimeException(e);
+        }
+    }
+
+    @Au
+32
+tomaticallyCalculatedConstant
+    public static f
+32
+inal String TEST_FILE_1_STRING_US_ASCII;
+
+    @A
+32
+utomaticallyCalculatedConstant
+    public static 
+32
+final byte TEST_FILE_1_BYTES_FIRST_ELEMENT;
+
+   
+32
+ @AutomaticallyCalculatedConstant
+    public stat
+32
+ic final byte[] TEST_FILE_1_BYTES_FIRST_TEN_ELEMEN
+32
+TS;
+
+    @ManuallyInitializedConstant("Make sure
+32
+ the content of this file is *( field-line CRLF ) 
+32
+CRLF")
+    public static final File TEST_FILE_2 =
+32
+ new File("src/test/resources/test_file_2");
+
+  
+32
+  @ManuallyInitializedConstant("The Fields object 
+32
+that represents the content of TEST_FILE_2")
+    
+32
+public static final Fields TEST_FILE_2_FIELDS;
+
+
+32
+    // initialize TEST_FILE_2_FIELDS
+    static {
+32
+
+        TEST_FILE_2_FIELDS = new Fields();
+    
+32
+    TEST_FILE_2_FIELDS.set("test-field-name1", "te
+32
+st-field-value1");
+        TEST_FILE_2_FIELDS.set
+32
+("test-field-name2", "test-field-value2");
+      
+32
+  TEST_FILE_2_FIELDS.set("test-field-name3", "test
+32
+-field-value3");
+        TEST_FILE_2_FIELDS.set("
+32
+test-field-name4", "test-field-value4");
+        
+32
+TEST_FILE_2_FIELDS.set("test-field-name5", "test-f
+32
+ield-value5");
+        TEST_FILE_2_FIELDS.set("te
+32
+st-field-name6", "test-field-value6");
+    }
+
+ 
+32
+   @AutomaticallyCalculatedConstant
+    public st
+32
+atic final int TEST_FILE_2_LONGEST_FILED_LINE_LENG
+32
+TH;
+
+    @AutomaticallyCalculatedConstant
+    p
+32
+ublic static final int TEST_FILE_2_SECTION_SIZE;
+
+32
+
+    @ManuallyInitializedConstant("chunked TEST_F
+32
+ILE_1")
+    public static final File CHUNKED_TEST
+32
+_FILE_1 =
+            new File("src/test/resource
+32
+s/chunked_test_file_1");
+
+    static {
+        
+32
+// if CHUNKED_TEST_FILE_1 does not exist,
+       
+32
+ // generate CHUNKED_TEST_FILE_1 automatically.
+
+32
+
+        if (!CHUNKED_TEST_FILE_1.exists())
+     
+32
+       try (var printStream = new PrintStream(new 
+32
+BufferedOutputStream(new FileOutputStream(
+      
+32
+              CHUNKED_TEST_FILE_1)));
+           
+32
+      var inputStream = new BufferedInputStream(ne
+32
+w FileInputStream(TEST_FILE_1))) {
+
+            
+32
+    final byte[] b = new byte[50];
+              
+32
+  int read;
+                while ((read = inputS
+32
+tream.read(b)) > 0) {
+                    printSt
+32
+ream.print(Integer.toString(read, 16));
+         
+32
+           printStream.write(0XD);
+              
+32
+      printStream.write(0XA);
+                   
+32
+ printStream.write(b, 0, read);
+                 
+32
+   printStream.write(0XD);
+                    pr
+32
+intStream.write(0XA);
+                }
+        
+32
+        printStream.print(0);
+                pri
+32
+ntStream.write(0XD);
+                printStream.
+32
+write(0XA);
+
+                final Fields genera
+32
+tedTrailerFields = new Fields();
+                
+32
+generatedTrailerFields.set(
+                     
+32
+   "generated-trailer-field-name1",
+             
+32
+           "generated-trailer-field-value1"
+     
+32
+           );
+                generatedTrailerFie
+32
+lds.set(
+                        "generated-trail
+32
+er-field-name2",
+                        "generat
+32
+ed-trailer-field-value2"
+                );
+    
+32
+            generatedTrailerFields.set(
+         
+32
+               "generated-trailer-field-name3",
+ 
+32
+                       "generated-trailer-field-va
+32
+lue3"
+                );
+
+                gener
+32
+atedTrailerFields.print(printStream);
+
+         
+32
+       printStream.write(0XD);
+                pr
+32
+intStream.write(0XA);
+            } catch (Except
+32
+ion e) {
+                throw new RuntimeExcepti
+32
+on(e);
+            }
+    }
+
+    @ManuallyIniti
+32
+alizedConstant("trailer fields of CHUNKED_TEST_FIL
+32
+E_1")
+    public static final Fields CHUNKED_TEST
+32
+_FILE_1_TRAILER_FIELDS;
+
+    static {
+        C
+32
+HUNKED_TEST_FILE_1_TRAILER_FIELDS = new Fields();
+32
+
+        CHUNKED_TEST_FILE_1_TRAILER_FIELDS.set(
+
+32
+                "generated-trailer-field-name1",
+
+32
+                "generated-trailer-field-value1"
+
+32
+        );
+        CHUNKED_TEST_FILE_1_TRAILER_FI
+32
+ELDS.set(
+                "generated-trailer-fiel
+32
+d-name2",
+                "generated-trailer-fiel
+32
+d-value2"
+        );
+        CHUNKED_TEST_FILE_1
+32
+_TRAILER_FIELDS.set(
+                "generated-t
+32
+railer-field-name3",
+                "generated-t
+32
+railer-field-value3"
+        );
+    }
+
+    @Au
+32
+tomaticallyCalculatedConstant
+    public static f
+32
+inal byte[] CHUNKED_TEST_FILE_1_BYTES;
+
+    @Aut
+32
+omaticallyCalculatedConstant
+    public static fi
+32
+nal int CHUNKED_TEST_FILE_1_BYTES_LENGTH;
+
+    /
+32
+/ Requirements
+    static {
+        try {
+     
+32
+       for (Field field : TestConstants.class.getF
+32
+ields()) {
+                int mod = field.getMod
+32
+ifiers();
+                if (!Modifier.isStatic(
+32
+mod) || !Modifier.isFinal(mod))
+                 
+32
+   throw new RuntimeException("All public fields d
+32
+eclared in this class" +
+                        
+32
+    " must be static and final.");
+              
+32
+  if (field.getAnnotations().length != 1)
+       
+32
+             throw new RuntimeException("Each publ
+32
+ic field can be annotated with " +
+              
+32
+              "only one annotation.");
+          
+32
+      if (!field.isAnnotationPresent(ManuallyIniti
+32
+alizedConstant.class)
+                        && 
+32
+!field.isAnnotationPresent(AutomaticallyCalculated
+32
+Constant.class)
+                        && !field
+32
+.isAnnotationPresent(SelfTestedConstant.class))
+ 
+32
+                   throw new RuntimeException("Eac
+32
+h public field must be annotated with " +
+       
+32
+                     "one of the three annotations
+32
+: @ManuallyInitializedConstants, " +
+            
+32
+                "@AutomaticallyCalculatedConstants
+32
+ or @SelfTestedConstants.");
+
+                if
+32
+ (field.isAnnotationPresent(SelfTestedConstant.cla
+32
+ss)) {
+                    String selfTestMethodN
+32
+ame = field.getAnnotation(SelfTestedConstant.class
+32
+)
+                            .value();
+        
+32
+            Method selfTestMethod = TestConstants.
+32
+class.getDeclaredMethod(
+                        
+32
+    selfTestMethodName, Field.class);
+
+         
+32
+           int modifiers = selfTestMethod.getModif
+32
+iers();
+                    if (!Modifier.isPriva
+32
+te(modifiers) || !Modifier.isStatic(modifiers))
+ 
+32
+                       throw new RuntimeException
+32
+
+                                ("A self-test met
+32
+hod must be both private and static.");
+         
+32
+           if (selfTestMethod.getReturnType() != V
+32
+oid.TYPE)
+                        throw new Runti
+32
+meException
+                                ("A s
+32
+elf-test method must not have any return value");
+32
+
+                    if (selfTestMethod.getParamet
+32
+erCount() != 1
+                            || sel
+32
+fTestMethod.getParameterTypes()[0] != Field.class)
+32
+
+                        throw new RuntimeExcepti
+32
+on("A self-test method must have only one " +
+   
+32
+                             "parameter, and the t
+32
+ype of the parameter must be: " +
+               
+32
+                 Field.class.getCanonicalName());
+32
+
+                    if (selfTestMethod.getExcepti
+32
+onTypes().length != 0)
+                        th
+32
+row new RuntimeException("A self-test method must 
+32
+not have any" +
+                                "
+32
+ exception declared to be thrown");
+             
+32
+   }
+            }
+        } catch (Exception e)
+32
+ {throw new RuntimeException(e);}
+    }
+
+    //
+32
+ Manually Initialized Constants Report
+    static
+32
+ {
+
+        try {
+            StringBuilder mes
+32
+sage = new StringBuilder("""
+                    
+32
+Make sure the following values are correct:
+     
+32
+                                   
+             
+32
+       """);
+
+            for (Field field : Tes
+32
+tConstants.class.getFields()) {
+                i
+32
+f (!field.isAnnotationPresent(ManuallyInitializedC
+32
+onstant.class)) continue;
+
+                messa
+32
+ge.append("\t// ")
+                        .appen
+32
+d(field.getAnnotation(ManuallyInitializedConstant.
+32
+class).value())
+                        .append(S
+32
+ystem.lineSeparator())
+                        .a
+32
+ppend("\t")
+                        .append(field
+32
+.getName())
+                        .append(" = "
+32
+)
+                        .append(field.get(null)
+32
+)
+                        .append(";")
+         
+32
+               .append(System.lineSeparator())
+  
+32
+                      .append(System.lineSeparator
+32
+());
+            }
+            System.out.printl
+32
+n(message);
+        } catch (Exception e) {throw 
+32
+new RuntimeException(e);}
+    }
+
+    // Self-Te
+32
+st Methods Invocation
+    static {
+        try {
+32
+
+            for (Field field : Arrays
+         
+32
+           .stream(TestConstants.class.getFields()
+32
+)
+                    .filter((field) -> field.is
+32
+AnnotationPresent(SelfTestedConstant.class))
+    
+32
+                .toList()) {
+
+                St
+32
+ring selfTestMethodName = field.getAnnotation(Self
+32
+TestedConstant.class).value();
+                Me
+32
+thod selfTestMethod = TestConstants.class.getDecla
+32
+redMethod(selfTestMethodName,
+                   
+32
+     Field.class);
+                selfTestMethod
+32
+.invoke(null, field);
+            }
+        } ca
+32
+tch (Exception e) {
+            throw new Runtime
+32
+Exception(e);
+        }
+    }
+
+    // Automati
+32
+cally Calculated Constants Initialization
+    sta
+32
+tic {
+
+        // If any automatically calculate
+32
+d constant is not initialized,
+        // you wil
+32
+l have a compiler error.
+
+        try (var in = 
+32
+new FileInputStream(TEST_FILE_1)) {
+            T
+32
+EST_FILE_1_BYTES = in.readAllBytes();
+        } c
+32
+atch (Exception e) {
+            throw new Runtim
+32
+eException(e);
+        }
+        TEST_FILE_1_STR
+32
+ING_US_ASCII = new String(TEST_FILE_1_BYTES, Stand
+32
+ardCharsets.US_ASCII);
+        TEST_FILE_1_BYTES_
+32
+FIRST_ELEMENT = TEST_FILE_1_BYTES[0];
+        TES
+32
+T_FILE_1_BYTES_FIRST_TEN_ELEMENTS = Arrays.copyOf(
+32
+TEST_FILE_1_BYTES, 10);
+        TEST_FILE_2_LONGE
+32
+ST_FILED_LINE_LENGTH = TEST_FILE_2_FIELDS
+       
+32
+         .toList()
+                .stream()
+   
+32
+             .map((field) -> field.fieldName() + "
+32
+: " + field.fieldValue())
+                .mapToI
+32
+nt(String::length)
+                .max()
+      
+32
+          .orElseThrow();
+        TEST_FILE_2_SEC
+32
+TION_SIZE = TEST_FILE_2_FIELDS
+                .t
+32
+oList()
+                .stream()
+              
+32
+  .map((field) -> field.fieldName() + ": " + field
+32
+.fieldValue())
+                .mapToInt(String::
+32
+length)
+                .map((i) -> i + 2)
+     
+32
+           .sum();
+        try (var in = new File
+32
+InputStream(CHUNKED_TEST_FILE_1)) {
+            C
+32
+HUNKED_TEST_FILE_1_BYTES = in.readAllBytes();
+   
+32
+     } catch (Exception e) {
+            throw ne
+32
+w RuntimeException(e);
+        }
+        CHUNKED
+32
+_TEST_FILE_1_BYTES_LENGTH = CHUNKED_TEST_FILE_1_BY
+1b
+TES.length;
+
+    }
+
+}
+
+0
+generated-trailer-field-name1: generated-trailer-field-value1
+generated-trailer-field-name2: generated-trailer-field-value2
+generated-trailer-field-name3: generated-trailer-field-value3
+
